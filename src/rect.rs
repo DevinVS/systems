@@ -18,18 +18,22 @@ impl <T> Rect<T> {
     }
 }
 
-impl <T> Rect<T>
-where
-    T: Into<u32> + Into<i32> + Copy
-{
+impl Rect<i32> {
     /// Turn into sdl2 rectangle
     pub fn sdl2(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
-            self.x.into(),
-            self.y.into(),
-            self.w.into(),
-            self.h.into()
+            self.x,
+            self.y,
+            self.w as u32,
+            self.h as u32
         )
+    }
+}
+
+impl Rect<f32> {
+    /// Turn into sdl2 rectangle
+    pub fn sdl2(&self) -> sdl2::rect::Rect {
+        sdl2::rect::Rect::new(self.x as i32, self.y as i32, self.w as u32, self.h as u32)
     }
 }
 
