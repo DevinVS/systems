@@ -1,6 +1,6 @@
 use crate::component::PositionComponent;
 
-use std::ops::{Add, AddAssign};
+use std::ops::Add;
 
 /// Rectangle which exists inside the game world
 #[derive(Debug, Copy, Clone)]
@@ -28,6 +28,14 @@ impl Rect<i32> {
             self.h as u32
         )
     }
+
+    /// Create a new rectangle that has the offset of a position component
+    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<i32> {
+        self.x += pos.x() as i32;
+        self.y += pos.y() as i32;
+
+        self
+    }
 }
 
 impl Rect<u32> {
@@ -40,12 +48,28 @@ impl Rect<u32> {
             self.h
         )
     }
+
+    /// Create a new rectangle that has the offset of a position component
+    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<u32> {
+        self.x += pos.x() as u32;
+        self.y += pos.y() as u32;
+
+        self
+    }
 }
 
 impl Rect<f32> {
     /// Turn into sdl2 rectangle
     pub fn sdl2(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(self.x as i32, self.y as i32, self.w as u32, self.h as u32)
+    }
+
+    /// Create a new rectangle that has the offset of a position component
+    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<f32> {
+        self.x += pos.x();
+        self.y += pos.y();
+
+        self
     }
 }
 
@@ -74,18 +98,5 @@ where
         }
 
         return true;
-    }
-}
-
-impl<T> Rect<T>
-where
-    T: AddAssign + From<f32>
-{
-    /// Create a new rectangle that has the offset of a position component
-    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<T> {
-        self.x += pos.x().into();
-        self.y += pos.y().into();
-
-        self
     }
 }
