@@ -30,6 +30,18 @@ impl Rect<i32> {
     }
 }
 
+impl Rect<u32> {
+    /// Turn into sdl2 rectangle
+    pub fn sdl2(&self) -> sdl2::rect::Rect {
+        sdl2::rect::Rect::new(
+            self.x as i32,
+            self.y as i32,
+            self.w,
+            self.h
+        )
+    }
+}
+
 impl Rect<f32> {
     /// Turn into sdl2 rectangle
     pub fn sdl2(&self) -> sdl2::rect::Rect {
