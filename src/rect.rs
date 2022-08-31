@@ -1,31 +1,38 @@
 use crate::component::PositionComponent;
 
+use std::ops::{Add, AddAssign};
+
 /// Rectangle which exists inside the game world
 #[derive(Debug, Copy, Clone)]
-pub struct Rect {
-    pub x: f32,
-    pub y: f32,
-    pub w: f32,
-    pub h: f32
+pub struct Rect<T> {
+    pub x: T,
+    pub y: T,
+    pub w: T,
+    pub h: T
 }
 
-impl Rect {
-    /// Create a new rectangle
-    pub fn new(x: f32, y: f32, w: f32, h: f32) -> Rect {
-        Rect {x, y, w, h}
+impl <T> Rect<T> {
+    /// Create new rectangle
+    pub fn new(x: T, y: T, w: T, h: T) -> Rect<T> {
+        Rect { x, y, w, h }
     }
+}
 
+impl <T> Rect<T>
+where
+    T: Add<Output = T> + PartialOrd + Copy
+{
     /// Check if this rectangle intersects in any way with another retangle
-    pub fn has_intersection(&self, other: &Rect) -> bool {
+    pub fn has_intersection(&self, other: &Rect<T>) -> bool {
         let left = self.x;
-        let right = self.x + self.w as f32;
+        let right = self.x + self.w;
         let top = self.y;
-        let bottom = self.y + self.h as f32;
+        let bottom = self.y + self.h;
 
         let o_left = other.x;
-        let o_right = other.x + other.w as f32;
+        let o_right = other.x + other.w;
         let o_top = other.y;
-        let o_bottom = other.y + other.h as f32;
+        let o_bottom = other.y + other.h;
 
         if right <= o_left || o_right <= left {
             return false;
@@ -37,11 +44,16 @@ impl Rect {
 
         return true;
     }
+}
 
+impl<T> Rect<T>
+where
+    T: AddAssign + From<f32>
+{
     /// Create a new rectangle that has the offset of a position component
-    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect {
-        self.x += pos.x();
-        self.y += pos.y();
+    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<T> {
+        self.x += pos.x().into();
+        self.y += pos.y().into();
 
         self
     }

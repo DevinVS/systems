@@ -8,7 +8,7 @@ use crate::component::{
 };
 
 pub trait CollisionMap {
-    fn test(&self, rect: &Rect) -> bool;
+    fn test(&self, rect: &Rect<f32>) -> bool;
 }
 
 pub struct PhysicsSystem {
@@ -114,9 +114,9 @@ impl PhysicsSystem {
         map: Option<&CM>,
         i: usize,
         vel: &mut V,
-        irect: &Rect,
-        after_x: &mut Rect,
-        after_y: &mut Rect,
+        irect: &Rect<f32>,
+        after_x: &mut Rect<f32>,
+        after_y: &mut Rect<f32>,
     ) -> (Option<f32>, Option<f32>)
     where
         P: Position,
