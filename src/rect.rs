@@ -20,6 +20,21 @@ impl <T> Rect<T> {
 
 impl <T> Rect<T>
 where
+    T: Into<u32> + Into<i32> + Copy
+{
+    /// Turn into sdl2 rectangle
+    pub fn sdl2(&self) -> sdl2::rect::Rect {
+        sdl2::rect::Rect::new(
+            self.x.into(),
+            self.y.into(),
+            self.w.into(),
+            self.h.into()
+        )
+    }
+}
+
+impl <T> Rect<T>
+where
     T: Add<Output = T> + PartialOrd + Copy
 {
     /// Check if this rectangle intersects in any way with another retangle
