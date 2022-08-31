@@ -7,6 +7,10 @@ use crate::component::{
     PhysicsComponent as Physics,
 };
 
+pub trait CollisionMap {
+    fn test(&self, rect: &Rect) -> bool;
+}
+
 pub struct PhysicsSystem {
     last_tick: Instant
 }
@@ -28,20 +32,22 @@ impl PhysicsSystem {
         Self::apply_velocity(p, v, t);
     }
 
-    pub fn collision<P, V, PH>(
+    pub fn collision<P, V, PH, CM>(
         &mut self,
         p: &mut Vec<Option<P>>,
         v: &mut Vec<Option<V>>,
         ph: &Vec<Option<PH>>,
+        map: Option<&CM>
         )
     where
         P: Position,
         V: Velocity,
-        PH: Physics
+        PH: Physics,
+        CM: CollisionMap,
     {
         let t = self.last_tick.elapsed().as_secs_f32();
         self.last_tick = Instant::now();
-        Self::apply_collision(p, v, ph, t);
+        Self::apply_collision(p, v, ph, map, t);
         Self::apply_velocity(p, v, t);
     }
 
@@ -63,16 +69,18 @@ impl PhysicsSystem {
         }
     }
 
-    fn apply_collision<P, V, PH>(
+    fn apply_collision<P, V, PH, CM>(
         p: &mut Vec<Option<P>>,
         v: &mut Vec<Option<V>>,
         ph: &Vec<Option<PH>>,
+        map: Option<&CM>,
         t: f32,
     )
     where
         P: Position,
         V: Velocity,
         PH: Physics,
+        CM: CollisionMap,
     {
         for i in 0..p.len() {
             if p[i].is_none() || v[i].is_none() || ph[i].is_none() { continue; }
@@ -80,7 +88,7 @@ impl PhysicsSystem {
             let phy = ph[i].as_ref().unwrap();
             let vel = v[i].as_mut().unwrap();
 
-            let (irect, after_x, after_y) = {
+            let (irect, mut after_x, mut after_y) = {
                 let pos = p[i].as_mut().unwrap();
                 let irect = phy.hitbox().after_position(pos);
                 let mut after_x = phy.hitbox().after_position(pos);
@@ -92,7 +100,7 @@ impl PhysicsSystem {
                 (irect, after_x, after_y)
             };
 
-            let (x_delta, y_delta) = Self::handle_collision(p, ph, i, vel, &irect, &after_x, &after_y);
+            let (x_delta, y_delta) = Self::handle_collision(p, ph, map, i, vel, &irect, &mut after_x, &mut after_y);
 
             let pos = p[i].as_mut().unwrap();
             pos.set_x(pos.x() + x_delta.unwrap_or(0.0));
@@ -100,23 +108,50 @@ impl PhysicsSystem {
         }
     }
 
-    fn handle_collision<P, V, PH>(
+    fn handle_collision<P, V, PH, CM>(
         p: &Vec<Option<P>>,
         ph: &Vec<Option<PH>>,
+        map: Option<&CM>,
         i: usize,
         vel: &mut V,
         irect: &Rect,
-        after_x: &Rect,
-        after_y: &Rect,
-        ) -> (Option<f32>, Option<f32>)
+        after_x: &mut Rect,
+        after_y: &mut Rect,
+    ) -> (Option<f32>, Option<f32>)
     where
         P: Position,
         V: Velocity,
-        PH: Physics
+        PH: Physics,
+        CM: CollisionMap,
     {
 
         let mut x_delta: Option<f32> = None;
         let mut y_delta: Option<f32> = None;
+
+        // Check map collisions if applicable
+        if let Some(map) = map {
+            // For each axis do a binary search sort of thing to figure out
+            // how much the rect is allowed to move
+            while map.test(after_x) {
+                if vel.x() <= 1.0 {
+                    vel.set_x(0.0);
+                    break;
+                }
+
+                vel.set_x(vel.x() / 2.0);
+                after_x.w -= vel.x();
+            }
+
+            while map.test(after_y) {
+                if vel.y() <= 1.0 {
+                    vel.set_y(0.0);
+                    break;
+                }
+
+                vel.set_y(vel.y() / 2.0);
+                after_y.h -= vel.y();
+            }
+        }
 
         // For every other entity, check whether the new hitbox after x and y components
         // of the velocity intersects

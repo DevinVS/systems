@@ -35,4 +35,3 @@ pub trait AnimationComponent {
     fn ready(&self) -> bool;
     fn finished(&self) -> bool { false }
 }
-
