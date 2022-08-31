@@ -20,6 +20,10 @@ pub trait PhysicsComponent {
     fn hitbox(&self) -> &Rect;
 }
 
+pub trait DepthComponent {
+    fn depth(&self) -> f32;
+}
+
 pub trait GraphicsComponent {
     fn texture(&self) -> f32;
     fn renderbox(&self) -> &Rect;
