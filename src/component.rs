@@ -17,7 +17,7 @@ pub trait VelocityComponent {
 }
 
 pub trait PhysicsComponent {
-    fn hitbox(&self) -> &Rect;
+    fn hitbox(&self) -> Rect;
 }
 
 pub trait DepthComponent {
@@ -26,7 +26,7 @@ pub trait DepthComponent {
 
 pub trait GraphicsComponent {
     fn texture(&self) -> f32;
-    fn renderbox(&self) -> &Rect;
+    fn renderbox(&self) -> Rect;
     fn srcbox(&self) -> Option<(u32, u32, u32, u32)> { None }
 }
 
