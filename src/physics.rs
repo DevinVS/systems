@@ -94,8 +94,16 @@ impl PhysicsSystem {
                 let mut after_x = phy.hitbox().after_position(pos);
                 let mut after_y = phy.hitbox().after_position(pos);
 
-                after_x.w += vel.x() * t;
-                after_y.h += vel.y() * t;
+                after_x.w += vel.x().abs() * t;
+                after_y.h += vel.y().abs() * t;
+
+                if vel.x() <= 0.0 {
+                    after_x.x -= vel.x().abs() * t;
+                }
+
+                if vel.y() <= 0.0 {
+                    after_y.y -= vel.y().abs() * t;
+                }
 
                 (irect, after_x, after_y)
             };
@@ -132,33 +140,22 @@ impl PhysicsSystem {
         if let Some(map) = map {
             // For each axis do a binary search sort of thing to figure out
             // how much the rect is allowed to move
-            while map.test(after_x) {
-                if vel.x() <= 1.0 {
-                    vel.set_x(0.0);
-                    break;
-                }
-
-                vel.set_x(vel.x() / 2.0);
-                after_x.w -= vel.x();
+            if map.test(after_x) {
+                vel.set_x(0.0);
             }
 
-            while map.test(after_y) {
-                if vel.y() <= 1.0 {
-                    vel.set_y(0.0);
-                    break;
-                }
-
-                vel.set_y(vel.y() / 2.0);
-                after_y.h -= vel.y();
+            if map.test(after_y) {
+                vel.set_y(0.0);
             }
         }
 
         // For every other entity, check whether the new hitbox after x and y components
         // of the velocity intersects
         for j in 0..p.len() {
-            if p[i].is_none() || ph[i].is_none() { continue; }
+            if i==j || p[j].is_none() || ph[j].is_none() { continue; }
 
-            let jrect = ph[j].as_ref().unwrap().hitbox().after_position(p[j].as_ref().unwrap());
+            let jrect = ph[j].as_ref().unwrap().hitbox()
+                .after_position(p[j].as_ref().unwrap());
 
             if jrect.has_intersection(&after_x) {
                 // Distance from edge of irect to edge of jrect
@@ -184,7 +181,7 @@ impl PhysicsSystem {
             if jrect.has_intersection(&after_y) {
                 // Distance from edge of irect to edge of jrect
                 let dist = if vel.y().signum() >= 0.0 {
-                    jrect.y - (jrect.y + jrect.h)
+                    jrect.y - (irect.y + irect.h)
                 } else {
                     (jrect.y + jrect.h) - irect.y
                 };
