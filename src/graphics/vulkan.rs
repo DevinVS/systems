@@ -89,7 +89,7 @@ pub struct Vertex {
 }
 vulkano::impl_vertex!(Vertex, position, tex_coords);
 
-pub struct GraphicsSystem {
+pub struct VulkanState {
     _instance: Arc<Instance>,
     device: Arc<Device>,
     queue: Arc<Queue>,
@@ -120,8 +120,8 @@ pub struct GraphicsSystem {
     sampler: Arc<Sampler>,
 }
 
-impl GraphicsSystem {
-    pub fn new(event_loop: &EventLoop<()>, atlas: &Atlas) -> GraphicsSystem {
+impl VulkanState {
+    pub fn new(event_loop: &EventLoop<()>, atlas: &Atlas) -> VulkanState {
         // Required extensions for rendering to a window
         let required_extensions = vulkano_win::required_extensions();
 
@@ -298,10 +298,10 @@ impl GraphicsSystem {
             .unwrap();
 
         // Actual framebuffers to draw to
-        let framebuffers = GraphicsSystem::window_size_dependent_setup(&images, render_pass.clone(), &mut viewport, &mut scissor, None);
+        let framebuffers = VulkanState::window_size_dependent_setup(&images, render_pass.clone(), &mut viewport, &mut scissor, None);
         let previous_frame_end = Some(atlas_fut.boxed());
 
-        GraphicsSystem {
+        VulkanState {
             _instance: instance,
             device,
             queue,
@@ -447,7 +447,7 @@ impl GraphicsSystem {
         self.swapchain = new_swapchain;
         // Because framebuffers contains an Arc on the old swapchain, we need to
         // recreate framebuffers as well.
-        self.framebuffers = GraphicsSystem::window_size_dependent_setup(&new_images,self.render_pass.clone(), &mut self.viewport, &mut self.scissor, Some(camera));
+        self.framebuffers = VulkanState::window_size_dependent_setup(&new_images,self.render_pass.clone(), &mut self.viewport, &mut self.scissor, Some(camera));
         self.recreate_swapchain = false;
     }
 

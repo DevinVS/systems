@@ -1,6 +1,7 @@
+use std::ops::Add;
 use crate::component::PositionComponent;
 
-use std::ops::Add;
+use crate::graphics::{Texture, Vertex};
 
 /// Rectangle which exists inside the game world
 #[derive(Debug, Copy, Clone)]
@@ -13,24 +14,12 @@ pub struct Rect<T> {
 
 impl <T> Rect<T> {
     /// Create new rectangle
-    #[cfg(feature = "sdl2")]
     pub fn new(x: T, y: T, w: T, h: T) -> Rect<T> {
         Rect { x, y, w, h }
     }
 }
 
 impl Rect<i32> {
-    /// Turn into sdl2 rectangle
-    #[cfg(feature = "sdl2")]
-    pub fn sdl2(&self) -> sdl2::rect::Rect {
-        sdl2::rect::Rect::new(
-            self.x,
-            self.y,
-            self.w as u32,
-            self.h as u32
-        )
-    }
-
     /// Create a new rectangle that has the offset of a position component
     pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<i32> {
         self.x += pos.x() as i32;
@@ -41,17 +30,6 @@ impl Rect<i32> {
 }
 
 impl Rect<u32> {
-    /// Turn into sdl2 rectangle
-    #[cfg(feature = "sdl2")]
-    pub fn sdl2(&self) -> sdl2::rect::Rect {
-        sdl2::rect::Rect::new(
-            self.x as i32,
-            self.y as i32,
-            self.w,
-            self.h
-        )
-    }
-
     /// Create a new rectangle that has the offset of a position component
     pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<u32> {
         self.x += pos.x() as u32;
@@ -62,18 +40,38 @@ impl Rect<u32> {
 }
 
 impl Rect<f32> {
-    /// Turn into sdl2 rectangle
-    #[cfg(feature = "sdl2")]
-    pub fn sdl2(&self) -> sdl2::rect::Rect {
-        sdl2::rect::Rect::new(self.x as i32, self.y as i32, self.w as u32, self.h as u32)
-    }
-
     /// Create a new rectangle that has the offset of a position component
     pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<f32> {
         self.x += pos.x();
         self.y += pos.y();
 
         self
+    }
+
+    /// Create vertices for upload to gpu
+    pub fn vertices(&self, tex: &Texture) -> [Vertex; 4] {
+        [
+            Vertex {
+                position: [self.x, self.y],
+                tex_coords: tex.nw()
+            },
+            Vertex {
+                position: [self.x + self.w, self.y],
+                tex_coords: tex.ne()
+            },
+            Vertex {
+                position: [self.x + self.w, self.y + self.h],
+                tex_coords: tex.se()
+            },
+            Vertex {
+                position: [self.x, self.y + self.h],
+                tex_coords: tex.sw()
+            }
+        ]
+    }
+
+    pub fn indices(&self, vert_index: u16) -> [u16; 6] {
+        [vert_index, vert_index+1, vert_index+2, vert_index+2, vert_index+3, vert_index]
     }
 }
 
