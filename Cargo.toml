@@ -3,7 +3,14 @@ name = "systems"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-sdl2 = "0.35"
+vulkano = { version = "0.30"}
+vulkano-shaders = {version = "0.30"}
+winit = { version="0.26"}
+vulkano-win = {version="0.30"}
+png = { version = "0.17"}
+serde = { version = "1", features = ["derive"]}
+zip = { version = "0.6"}
+bincode = { version="1.3"}
+bytemuck = { version = "1.12"}
+cgmath = { version = "0.18"}

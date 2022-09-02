@@ -1,4 +1,5 @@
 use crate::rect::Rect;
+use crate::graphics::Texture;
 
 pub trait PositionComponent {
     fn x(&self) -> f32;
@@ -20,18 +21,13 @@ pub trait PhysicsComponent {
     fn hitbox(&self) -> Rect<f32>;
 }
 
-pub trait DepthComponent {
-    fn depth(&self) -> f32;
-}
-
 pub trait GraphicsComponent {
-    fn texture(&self) -> f32;
+    fn texture(&self) -> Texture;
     fn renderbox(&self) -> Rect<i32>;
-    fn srcbox(&self) -> Option<Rect<u32>> { None }
 }
 
-pub trait AnimationComponent {
-    fn next(&mut self) -> dyn GraphicsComponent;
+pub trait AnimationComponent<G: GraphicsComponent> {
+    fn next(&mut self) -> G;
     fn ready(&self) -> bool;
     fn finished(&self) -> bool { false }
 }

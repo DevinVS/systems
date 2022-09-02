@@ -13,6 +13,7 @@ pub struct Rect<T> {
 
 impl <T> Rect<T> {
     /// Create new rectangle
+    #[cfg(feature = "sdl2")]
     pub fn new(x: T, y: T, w: T, h: T) -> Rect<T> {
         Rect { x, y, w, h }
     }
@@ -20,6 +21,7 @@ impl <T> Rect<T> {
 
 impl Rect<i32> {
     /// Turn into sdl2 rectangle
+    #[cfg(feature = "sdl2")]
     pub fn sdl2(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
             self.x,
@@ -40,6 +42,7 @@ impl Rect<i32> {
 
 impl Rect<u32> {
     /// Turn into sdl2 rectangle
+    #[cfg(feature = "sdl2")]
     pub fn sdl2(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
             self.x as i32,
@@ -60,6 +63,7 @@ impl Rect<u32> {
 
 impl Rect<f32> {
     /// Turn into sdl2 rectangle
+    #[cfg(feature = "sdl2")]
     pub fn sdl2(&self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(self.x as i32, self.y as i32, self.w as u32, self.h as u32)
     }
