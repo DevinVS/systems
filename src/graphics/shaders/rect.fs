@@ -7,6 +7,5 @@ layout(set = 0, binding = 1) uniform sampler2D atlas;
 
 void main() {
     vec4 color = texture(atlas, v_tex_coords);
-    f_color = color;
     f_color = pow(color, vec4(1. / 2.2));
 }

@@ -23,7 +23,7 @@ pub trait PhysicsComponent {
 
 pub trait GraphicsComponent {
     fn texture(&self) -> Texture;
-    fn renderbox(&self) -> Rect<i32>;
+    fn renderbox(&self) -> Rect<f32>;
 }
 
 pub trait AnimationComponent<G: GraphicsComponent> {

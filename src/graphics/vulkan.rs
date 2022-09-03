@@ -117,6 +117,7 @@ pub struct VulkanState {
 
     atlas: Arc<ImageView<ImmutableImage>>,
     sampler: Arc<Sampler>,
+    clear_color: [f32; 4]
 }
 
 impl VulkanState {
@@ -324,6 +325,7 @@ impl VulkanState {
             previous_frame_end,
             atlas: atlas_tex,
             sampler,
+            clear_color: [0.0, 0.0, 0.0, 1.0]
         }
     }
 
@@ -377,7 +379,7 @@ impl VulkanState {
         builder
             .begin_render_pass(
                 RenderPassBeginInfo {
-                    clear_values: vec![Some([0.0, 0.0, 0.0, 1.0].into())],
+                    clear_values: vec![Some(self.clear_color.into())],
                     ..RenderPassBeginInfo::framebuffer(self.framebuffers[image_num].clone())
                 },
                 SubpassContents::Inline,

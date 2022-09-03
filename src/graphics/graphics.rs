@@ -24,7 +24,7 @@ impl<C: Camera> GraphicsSystem<C> {
     pub fn new(
         event_loop: &EventLoop<()>,
         atlas: Atlas,
-        cam_rect: Rect<i32>,
+        cam_rect: Rect<f32>,
         player_box: Rect<u32>,
         zoom: f32
     ) -> GraphicsSystem<C> {
