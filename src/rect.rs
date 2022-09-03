@@ -1,7 +1,23 @@
 use std::ops::Add;
 use crate::component::PositionComponent;
+use crate::graphics::Texture;
+use crate::graphics::vulkan::Vertex;
 
-use crate::graphics::{Texture, Vertex};
+pub trait IntoF32 {
+    fn to_f32(self) -> f32;
+}
+
+impl IntoF32 for i32 {
+    fn to_f32(self) -> f32 { self as f32 }
+}
+
+impl IntoF32 for u32 {
+    fn to_f32(self) -> f32 { self as f32 }
+}
+
+impl IntoF32 for f32 {
+    fn to_f32(self) -> f32 { self as f32 }
+}
 
 /// Rectangle which exists inside the game world
 #[derive(Debug, Copy, Clone)]
@@ -19,35 +35,20 @@ impl <T> Rect<T> {
     }
 }
 
-impl Rect<i32> {
+impl<T> Rect<T>
+where T: IntoF32
+{
     /// Create a new rectangle that has the offset of a position component
-    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<i32> {
-        self.x += pos.x() as i32;
-        self.y += pos.y() as i32;
-
-        self
+    pub fn after_position<P: PositionComponent>(self, pos: &P) -> Rect<f32> {
+        Rect {
+            x: self.x.to_f32() + pos.x(),
+            y: self.y.to_f32() + pos.y(),
+            w: self.w.to_f32(),
+            h: self.h.to_f32()
+        }
     }
 }
-
-impl Rect<u32> {
-    /// Create a new rectangle that has the offset of a position component
-    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<u32> {
-        self.x += pos.x() as u32;
-        self.y += pos.y() as u32;
-
-        self
-    }
-}
-
 impl Rect<f32> {
-    /// Create a new rectangle that has the offset of a position component
-    pub fn after_position<P: PositionComponent>(mut self, pos: &P) -> Rect<f32> {
-        self.x += pos.x();
-        self.y += pos.y();
-
-        self
-    }
-
     /// Create vertices for upload to gpu
     pub fn vertices(&self, tex: &Texture) -> [Vertex; 4] {
         [

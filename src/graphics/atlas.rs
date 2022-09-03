@@ -30,7 +30,7 @@ pub struct Texture{
 }
 
 impl Texture {
-    fn new(x: f32, y: f32, width: f32, height: f32) -> Texture{
+    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Texture{
         Texture {
             nw: [x, y],
             ne: [x + width, y],
@@ -59,6 +59,11 @@ impl Texture {
     pub fn se(&self) -> [f32; 2] {
         if self.flipped {self.sw} else {self.se}
     }
+
+    pub fn x(&self) -> f32 { self.nw[0] }
+    pub fn y(&self) -> f32 { self.nw[1] }
+    pub fn width(&self) -> f32 { self.ne[0] - self.nw[0] }
+    pub fn height(&self) -> f32 { self.se[1] - self.ne[1] }
 }
 
 
@@ -106,7 +111,7 @@ impl Atlas {
         (info, image_data)
     }
 
-    pub fn get(&self, key: &str) -> Texture {
-        self.records.get(key).unwrap().clone()
+    pub fn get(&self, key: &str) -> Option<Texture> {
+        self.records.get(key).map(|t| t.clone())
     }
 }

@@ -73,7 +73,6 @@ use vulkano::instance::InstanceCreateInfo;
 
 use vulkano_win::VkSurfaceBuild;
 
-use winit::dpi::LogicalSize;
 use winit::event_loop::EventLoop;
 use winit::window::Fullscreen;
 use winit::window::Window;
@@ -121,7 +120,7 @@ pub struct VulkanState {
 }
 
 impl VulkanState {
-    pub fn new(event_loop: &EventLoop<()>, atlas: &Atlas) -> VulkanState {
+    pub fn new<C: Camera>(event_loop: &EventLoop<()>, atlas: &Atlas) -> VulkanState {
         // Required extensions for rendering to a window
         let required_extensions = vulkano_win::required_extensions();
 
@@ -291,14 +290,14 @@ impl VulkanState {
             .vertex_input_state(BuffersDefinition::new().vertex::<Vertex>())
             .input_assembly_state(InputAssemblyState::new())
             .vertex_shader(vs.entry_point("main").unwrap(), ())
-            .viewport_state(ViewportState::viewport_dynamic_scissor_dynamic(1))
+            .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
             .fragment_shader(fs.entry_point("main").unwrap(), ())
             .color_blend_state(ColorBlendState::default().blend_alpha())
             .build(device.clone())
             .unwrap();
 
         // Actual framebuffers to draw to
-        let framebuffers = VulkanState::window_size_dependent_setup(&images, render_pass.clone(), &mut viewport, &mut scissor, None);
+        let framebuffers = VulkanState::window_size_dependent_setup::<C>(&images, render_pass.clone(), &mut viewport, &mut scissor, None);
         let previous_frame_end = Some(atlas_fut.boxed());
 
         VulkanState {
@@ -328,7 +327,13 @@ impl VulkanState {
         }
     }
 
-    pub fn draw(&mut self, camera: &Camera) {
+    pub fn draw<C: Camera>(&mut self, camera: &mut C) {
+        self.previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+        if self.recreate_swapchain {
+            self.recreate_swapchain(camera);
+        }
+
         let uniform_buffer_subbuffer = {
             let worldview = camera.matrix();
             let uniform_data = vs::ty::Data {
@@ -378,7 +383,7 @@ impl VulkanState {
                 SubpassContents::Inline,
             ).unwrap()
             .set_viewport(0, [self.viewport.clone()])
-            .set_scissor(0, [self.scissor.clone()])
+            //.set_scissor(0, [self.scissor.clone()])
             .bind_pipeline_graphics(self.pipeline.clone())
             .bind_descriptor_sets(
                 PipelineBindPoint::Graphics,
@@ -429,7 +434,13 @@ impl VulkanState {
         self.index_buffer = self.index_buffer_pool.chunk(indices).unwrap();
     }
 
-    pub fn recreate_swapchain(&mut self, camera: &Camera) {
+    pub fn recreate_swapchain<C: Camera>(&mut self, camera: &mut C) {
+        // Set camera properties
+        camera.handle_resize(
+            self.surface.window().inner_size().into(),
+            self.surface.window().scale_factor() as f32
+        );
+
         // Get the new dimensions of the window.
         self.dimensions = self.surface.window().inner_size().into();
         let (new_swapchain, new_images) =
@@ -451,12 +462,12 @@ impl VulkanState {
         self.recreate_swapchain = false;
     }
 
-    fn window_size_dependent_setup(
+    fn window_size_dependent_setup<C: Camera>(
         images: &[Arc<SwapchainImage<Window>>],
         render_pass: Arc<RenderPass>,
         viewport: &mut Viewport,
         scissor: &mut Scissor,
-        camera: Option<&Camera>,
+        camera: Option<&mut C>,
     ) -> Vec<Arc<Framebuffer>> {
         let dimensions: [u32; 2] = images[0].dimensions().width_height();
         viewport.dimensions = [dimensions[0] as f32, dimensions[1] as f32];
@@ -487,8 +498,19 @@ impl VulkanState {
             }).collect::<Vec<_>>()
     }
 
-    pub fn logical_size(&self) -> LogicalSize<u32> {
-        self.surface.window().inner_size().to_logical(self.surface.window().scale_factor())
+    pub fn logical_size(&self) -> (f32, f32) {
+        let size = self.surface.window().inner_size().to_logical(self.surface.window().scale_factor());
+
+        (size.width, size.height)
+    }
+
+    pub fn physical_size(&self) -> (u32, u32) {
+        let size = self.surface.window().inner_size();
+        (size.width, size.height)
+    }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.surface.window().scale_factor() as f32
     }
 
     pub fn window(&self) -> &Window {
