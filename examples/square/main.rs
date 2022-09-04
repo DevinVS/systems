@@ -27,7 +27,7 @@ impl PositionComponent for Position {
 #[derive(Copy, Clone)]
 struct Graphics {
     tex: Texture,
-    renderbox: Rect<i32>
+    renderbox: Rect<f32>
 }
 
 impl GraphicsComponent for Graphics {
@@ -35,7 +35,7 @@ impl GraphicsComponent for Graphics {
         self.tex
     }
 
-    fn renderbox(&self) -> Rect<i32> {
+    fn renderbox(&self) -> Rect<f32> {
         self.renderbox
     }
 }
@@ -45,12 +45,12 @@ fn main() {
     let atlas = Atlas::new("./examples/square/square.atlas");
 
     let rect_pos = Position { x: 240.0-16.0, y: 0.0 };
-    let rect_g = Graphics { tex: atlas.get("square.png").unwrap(), renderbox: Rect::new(0, 0, 16, 16) };
+    let rect_g = Graphics { tex: atlas.get("square.png").unwrap(), renderbox: Rect::new(0.0, 0.0, 16.0, 16.0) };
 
     let mut sys = GraphicsSystem::<FixedSizeCamera>::new(
         &event_loop,
         atlas,
-        Rect::new(0, 0, 240, 180),
+        Rect::new(0.0, 0.0, 240.0, 180.0),
         Rect::new(0, 0, 200, 140),
         1.0,
     );
