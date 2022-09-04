@@ -7,6 +7,7 @@ pub trait Camera {
     fn handle_resize(&mut self, physical_size: (u32, u32), scale_factor: f32);
     fn viewport(&self) -> ([u32; 2], [u32; 2]);
     fn pan_to(&mut self, rect: &Rect<f32>);
+    fn rect(&self) -> &Rect<f32>;
 }
 
 #[derive(Debug)]
@@ -44,6 +45,8 @@ impl Camera for FixedHeightCamera {
         cam.calculate_pixel_width();
         cam
     }
+
+    fn rect(&self) -> &Rect<f32> { &self.rect }
 
     fn matrix(&self) -> Matrix4<f32> {
         // Converts game pixel values into coordinate values
@@ -223,4 +226,6 @@ impl Camera for FixedSizeCamera {
             self.rect.y += rect_bottom - bottom;
         }
     }
+
+    fn rect(&self) -> &Rect<f32> { &self.rect }
 }

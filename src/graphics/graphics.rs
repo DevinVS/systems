@@ -6,12 +6,12 @@ use crate::graphics::Camera;
 use crate::rect::Rect;
 use super::atlas::Texture;
 
-struct ZeroPositionComponent {}
-impl PositionComponent for ZeroPositionComponent {
-    fn x(&self) -> f32 { 0.0 }
-    fn y(&self) -> f32 { 0.0 }
-    fn set_x(&mut self, _: f32) {}
-    fn set_y(&mut self, _: f32) {}
+struct Position {x: f32, y: f32}
+impl PositionComponent for Position {
+    fn x(&self) -> f32 { self.x }
+    fn y(&self) -> f32 { self.y }
+    fn set_x(&mut self, x: f32) {self.x = x}
+    fn set_y(&mut self, y: f32) {self.y = y}
 }
 
 pub struct GraphicsSystem<C: Camera> {
@@ -85,25 +85,27 @@ impl<C: Camera> GraphicsSystem<C> {
 
         // Add backgrounds
         for bg in bgs {
-            let bg_rect = bg.renderbox().after_position(&ZeroPositionComponent{});
+            let bg_rect = bg.renderbox().after_position(&Position{ x: 0.0, y: 0.0 });
             let bg_tex = bg.texture();
-            vertices.extend_from_slice(&bg_rect.vertices(&bg_tex));
+            vertices.extend_from_slice(&bg_rect.vertices(&bg_tex, &self.atlas));
             indices.extend_from_slice(&bg_rect.indices(vert_index));
             vert_index += 4;
         }
 
         // Add ordinary objects
         for i in 0..rects.len() {
-            vertices.extend_from_slice(&rects[i].1.vertices(&g[rects[i].0].as_ref().unwrap().texture()));
+            vertices.extend_from_slice(&rects[i].1.vertices(&g[rects[i].0].as_ref().unwrap().texture(), &self.atlas));
             indices.extend_from_slice(&rects[i].1.indices(vert_index));
             vert_index += 4;
         }
 
+        let cam = self.camera.rect();
+
         // Add overlays
         for ov in overlays {
-            let ov_rect = ov.renderbox().after_position(&ZeroPositionComponent {});
+            let ov_rect = ov.renderbox().after_position(&Position {x: cam.x, y: cam.y});
             let ov_tex = ov.texture();
-            vertices.extend_from_slice(&ov_rect.vertices(&ov_tex));
+            vertices.extend_from_slice(&ov_rect.vertices(&ov_tex, &self.atlas));
             indices.extend_from_slice(&ov_rect.indices(vert_index));
             vert_index += 4;
         }

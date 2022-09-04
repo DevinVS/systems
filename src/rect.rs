@@ -2,6 +2,7 @@ use std::ops::Add;
 use crate::component::PositionComponent;
 use crate::graphics::Texture;
 use crate::graphics::vulkan::Vertex;
+use crate::graphics::Atlas;
 
 pub trait IntoF32 {
     fn to_f32(self) -> f32;
@@ -50,23 +51,40 @@ where T: IntoF32
 }
 impl Rect<f32> {
     /// Create vertices for upload to gpu
-    pub fn vertices(&self, tex: &Texture) -> [Vertex; 4] {
+    pub fn vertices(&self, tex: &Texture, atlas: &Atlas) -> [Vertex; 4] {
+        let nw = tex.nw();
+        let ne = tex.ne();
+        let sw = tex.sw();
+        let se = tex.se();
+
         [
             Vertex {
                 position: [self.x, self.y],
-                tex_coords: tex.nw()
+                tex_coords: [
+                    nw[0] as f32 / atlas.width as f32,
+                    nw[1] as f32 / atlas.height as f32
+                ]
             },
             Vertex {
                 position: [self.x + self.w, self.y],
-                tex_coords: tex.ne()
+                tex_coords: [
+                    ne[0] as f32 / atlas.width as f32,
+                    ne[1] as f32 / atlas.height as f32
+                ]
             },
             Vertex {
                 position: [self.x + self.w, self.y + self.h],
-                tex_coords: tex.se()
+                tex_coords: [
+                    se[0] as f32 / atlas.width as f32,
+                    se[1] as f32 / atlas.height as f32
+                ]
             },
             Vertex {
                 position: [self.x, self.y + self.h],
-                tex_coords: tex.sw()
+                tex_coords: [
+                    sw[0] as f32 / atlas.width as f32,
+                    sw[1] as f32 / atlas.height as f32
+                ]
             }
         ]
     }

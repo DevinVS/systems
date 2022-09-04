@@ -4,14 +4,20 @@ use std::{collections::HashMap, fs::File, io::{BufReader, Read}};
 use zip::ZipArchive;
 use bincode::deserialize;
 
-
 #[derive(Debug, Deserialize)]
 struct AtlasRecord {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
     name: String
+}
+
+#[derive(Debug, Deserialize)]
+struct AtlasData {
+    records: Vec<AtlasRecord>,
+    width: u32,
+    height: u32,
 }
 
 impl AtlasRecord {
@@ -22,15 +28,15 @@ impl AtlasRecord {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Texture{
-    nw: [f32; 2],
-    ne: [f32; 2],
-    se: [f32; 2],
-    sw: [f32; 2],
+    nw: [u32; 2],
+    ne: [u32; 2],
+    se: [u32; 2],
+    sw: [u32; 2],
     flipped: bool
 }
 
 impl Texture {
-    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Texture{
+    pub fn new(x: u32, y: u32, width: u32, height: u32) -> Texture{
         Texture {
             nw: [x, y],
             ne: [x + width, y],
@@ -44,32 +50,34 @@ impl Texture {
         self.flipped = flipped;
     }
 
-    pub fn nw(&self) -> [f32; 2] {
-        if self.flipped {self.ne} else {self.nw}
+    pub fn nw(&self) -> [u32; 2] {
+        if self.flipped { self.ne } else { self.nw }
     }
 
-    pub fn ne(&self) -> [f32; 2] {
-        if self.flipped {self.nw} else {self.ne}
+    pub fn ne(&self) -> [u32; 2] {
+        if self.flipped { self.nw } else { self.ne }
     }
 
-    pub fn sw(&self) -> [f32; 2] {
-        if self.flipped {self.se} else {self.sw}
+    pub fn sw(&self) -> [u32; 2] {
+        if self.flipped { self.se } else { self.sw }
     }
 
-    pub fn se(&self) -> [f32; 2] {
-        if self.flipped {self.sw} else {self.se}
+    pub fn se(&self) -> [u32; 2] {
+        if self.flipped { self.sw } else { self.se }
     }
 
-    pub fn x(&self) -> f32 { self.nw[0] }
-    pub fn y(&self) -> f32 { self.nw[1] }
-    pub fn width(&self) -> f32 { self.ne[0] - self.nw[0] }
-    pub fn height(&self) -> f32 { self.se[1] - self.ne[1] }
+    pub fn x(&self) -> u32 { self.nw[0] }
+    pub fn y(&self) -> u32 { self.nw[1] }
+    pub fn width(&self) -> u32 { self.ne[0] - self.nw[0] }
+    pub fn height(&self) -> u32 { self.se[1] - self.ne[1] }
 }
 
 
 pub struct Atlas {
     records: HashMap<String, Texture>,
-    path: String
+    path: String,
+    pub width: u32,
+    pub height: u32
 }
 
 impl Atlas {
@@ -78,19 +86,23 @@ impl Atlas {
         let mut zip = ZipArchive::new(reader).unwrap();
 
         let mut metadata = zip.by_name("atlas.data").unwrap();
+
         let mut buf = Vec::new();
         metadata.read_to_end(&mut buf).unwrap();
 
-        let records: Vec<AtlasRecord> = deserialize(&buf).unwrap();
+        let data: AtlasData = deserialize(&buf).unwrap();
+
         let mut record_map = HashMap::new();
 
-        for r in records {
+        for r in data.records {
             record_map.insert(r.name.clone(), r.texture());
         }
 
         Atlas {
             path: path.to_string(),
-            records: record_map
+            records: record_map,
+            width: data.width,
+            height: data.height
         }
     }
 
