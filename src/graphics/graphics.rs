@@ -129,4 +129,9 @@ impl<C: Camera> GraphicsSystem<C> {
             });
         }
     }
+
+    pub fn update_atlas(&mut self, atlas: Atlas) {
+        self.atlas = atlas;
+        self.vulkan_state.update_atlas(&self.atlas);
+    }
 }

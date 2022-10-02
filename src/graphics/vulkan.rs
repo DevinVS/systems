@@ -74,7 +74,6 @@ use vulkano::instance::InstanceCreateInfo;
 use vulkano_win::VkSurfaceBuild;
 
 use winit::event_loop::EventLoop;
-use winit::window::Fullscreen;
 use winit::window::Window;
 use winit::window::WindowBuilder;
 
@@ -140,11 +139,7 @@ impl VulkanState {
         };
 
         let surface = WindowBuilder::new()
-            .with_always_on_top(true)
-            .with_decorations(false)
-            .with_fullscreen(Some(Fullscreen::Borderless(None)))
-            .with_resizable(false)
-            .with_transparent(true)
+            .with_resizable(true)
             .build_vk_surface(&event_loop, instance.clone())
             .unwrap();
 
@@ -190,7 +185,6 @@ impl VulkanState {
         let (swapchain, images) = {
             let caps = physical.surface_capabilities(&surface, Default::default()).unwrap();
             //let composite_alpha = caps.supported_composite_alpha.iter().next().unwrap();
-
             // Internal format for images
             let format = Some(
                 physical
@@ -263,7 +257,7 @@ impl VulkanState {
                 array_layers: 1
             };
     
-            let format = Format::R8G8B8A8_SRGB;
+            let format = Format::R8G8B8A8_UNORM;
     
             let (image, future) = ImmutableImage::from_iter(
                 image_data.iter().cloned(),
@@ -517,6 +511,30 @@ impl VulkanState {
 
     pub fn window(&self) -> &Window {
         self.surface.window()
+    }
+
+    pub fn update_atlas(&mut self, atlas: &Atlas) {
+        self.atlas = {
+            let (info, image_data) = atlas.image_data();
+
+            let dimensions = ImageDimensions::Dim2d {
+                width: info.width,
+                height: info.height,
+                array_layers: 1
+            };
+    
+            let format = Format::R8G8B8A8_UNORM;
+    
+            let (image, _) = ImmutableImage::from_iter(
+                image_data.iter().cloned(),
+                dimensions,
+                MipmapsCount::One,
+                format,
+                self.queue.clone()
+            ).unwrap();
+    
+            ImageView::new_default(image).unwrap()
+        };
     }
 }
 

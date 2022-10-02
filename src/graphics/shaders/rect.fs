@@ -6,7 +6,5 @@ layout(location = 0) out vec4 f_color;
 layout(set = 0, binding = 1) uniform sampler2D atlas;
 
 void main() {
-    vec4 color = texture(atlas, v_tex_coords);
-    f_color = pow(color, vec4(1. / 2.2));
-    //f_color = vec4(0.0, 0.7, 0.3, 0.3);
+    f_color = texture(atlas, v_tex_coords);
 }

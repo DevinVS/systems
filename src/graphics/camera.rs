@@ -117,7 +117,7 @@ pub struct FixedSizeCamera {
 
 impl FixedSizeCamera {
     fn calculate_pixel_width(&mut self) {
-        self.pixel_size = 5;
+        self.pixel_size = 10;
 
         while self.logical_size.0 < (self.rect.w as u32*self.pixel_size) as f32 ||
             self.logical_size.1 < (self.rect.h as u32*self.pixel_size) as f32
