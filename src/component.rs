@@ -19,6 +19,8 @@ pub trait VelocityComponent {
 
 pub trait PhysicsComponent {
     fn hitbox(&self) -> Rect<f32>;
+    fn set_x_collision(&mut self, with: Option<Rect<f32>>);
+    fn set_y_collision(&mut self, with: Option<Rect<f32>>);
 }
 
 pub trait GraphicsComponent {

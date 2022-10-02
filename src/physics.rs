@@ -15,6 +15,11 @@ pub struct PhysicsSystem {
     last_tick: Instant
 }
 
+pub struct Dummy {}
+impl CollisionMap for Dummy {
+    fn test(&self, _: &Rect<f32>) -> bool { false }
+}
+
 impl PhysicsSystem {
     pub fn new() -> PhysicsSystem {
         PhysicsSystem {
@@ -32,11 +37,30 @@ impl PhysicsSystem {
         Self::apply_velocity(p, v, t);
     }
 
-    pub fn collision<P, V, PH, CM>(
+    pub fn collision<P, V, PH>(
         &mut self,
         p: &mut Vec<Option<P>>,
         v: &mut Vec<Option<V>>,
-        ph: &Vec<Option<PH>>,
+        ph: &mut Vec<Option<PH>>
+    )
+    where
+        P: Position,
+        V: Velocity,
+        PH: Physics,
+    {
+        let t = self.last_tick.elapsed().as_secs_f32();
+        let map = Dummy{};
+        self.last_tick = Instant::now();
+        Self::apply_collision(p, v, ph, Some(&map), t);
+        Self::apply_velocity(p, v, t);
+    }
+
+
+    pub fn collision_map<P, V, PH, CM>(
+        &mut self,
+        p: &mut Vec<Option<P>>,
+        v: &mut Vec<Option<V>>,
+        ph: &mut Vec<Option<PH>>,
         map: Option<&CM>
         )
     where
@@ -72,7 +96,7 @@ impl PhysicsSystem {
     fn apply_collision<P, V, PH, CM>(
         p: &mut Vec<Option<P>>,
         v: &mut Vec<Option<V>>,
-        ph: &Vec<Option<PH>>,
+        ph: &mut Vec<Option<PH>>,
         map: Option<&CM>,
         t: f32,
     )
@@ -85,10 +109,10 @@ impl PhysicsSystem {
         for i in 0..p.len() {
             if p[i].is_none() || v[i].is_none() || ph[i].is_none() { continue; }
 
-            let phy = ph[i].as_ref().unwrap();
             let vel = v[i].as_mut().unwrap();
 
             let (irect, mut after_x, mut after_y) = {
+                let phy = ph[i].as_ref().unwrap();
                 let pos = p[i].as_mut().unwrap();
                 let irect = phy.hitbox().after_position(pos);
                 let mut after_x = phy.hitbox().after_position(pos);
@@ -108,11 +132,14 @@ impl PhysicsSystem {
                 (irect, after_x, after_y)
             };
 
-            let (x_delta, y_delta) = Self::handle_collision(p, ph, map, i, vel, &irect, &mut after_x, &mut after_y);
+            let (x_delta, x_coll, y_delta, y_coll) = Self::handle_collision(p, ph, map, i, vel, &irect, &mut after_x, &mut after_y);
 
             let pos = p[i].as_mut().unwrap();
+            let phy = ph[i].as_mut().unwrap();
             pos.set_x(pos.x() + x_delta.unwrap_or(0.0));
             pos.set_y(pos.y() + y_delta.unwrap_or(0.0));
+            phy.set_x_collision(x_coll);
+            phy.set_y_collision(y_coll);
         }
     }
 
@@ -125,7 +152,7 @@ impl PhysicsSystem {
         irect: &Rect<f32>,
         after_x: &mut Rect<f32>,
         after_y: &mut Rect<f32>,
-    ) -> (Option<f32>, Option<f32>)
+    ) -> (Option<f32>, Option<Rect<f32>>, Option<f32>, Option<Rect<f32>>)
     where
         P: Position,
         V: Velocity,
@@ -134,7 +161,9 @@ impl PhysicsSystem {
     {
 
         let mut x_delta: Option<f32> = None;
+        let mut x_coll: Option<Rect<f32>> = None;
         let mut y_delta: Option<f32> = None;
+        let mut y_coll: Option<Rect<f32>> = None;
 
         // Check map collisions if applicable
         if let Some(map) = map {
@@ -169,9 +198,11 @@ impl PhysicsSystem {
                 if let Some(d) = x_delta {
                     if dist.abs() < d.abs() {
                         x_delta = Some(dist);
+                        x_coll = Some(jrect);
                     }
                 } else {
                     x_delta = Some(dist);
+                    x_coll = Some(jrect);
                 }
 
                 // Zero out velocity
@@ -190,9 +221,11 @@ impl PhysicsSystem {
                 if let Some(d) = y_delta {
                     if dist.abs() < d.abs() {
                         y_delta = Some(dist);
+                        y_coll = Some(jrect);
                     }
                 } else {
                     y_delta = Some(dist);
+                    y_coll = Some(jrect);
                 }
 
                 // Zero out velocity
@@ -200,6 +233,6 @@ impl PhysicsSystem {
             }
         }
 
-        (x_delta, y_delta)
+        (x_delta, x_coll, y_delta, y_coll)
     }
 }

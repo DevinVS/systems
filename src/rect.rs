@@ -4,6 +4,10 @@ use crate::graphics::Texture;
 use crate::graphics::vulkan::Vertex;
 use crate::graphics::Atlas;
 
+use serde::{Serialize, Deserialize};
+
+const TOLERANCE: f32 = 0.0001;
+
 pub trait IntoF32 {
     fn to_f32(self) -> f32;
 }
@@ -21,7 +25,7 @@ impl IntoF32 for f32 {
 }
 
 /// Rectangle which exists inside the game world
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Rect<T> {
     pub x: T,
     pub y: T,
@@ -92,14 +96,9 @@ impl Rect<f32> {
     pub fn indices(&self, vert_index: u16) -> [u16; 6] {
         [vert_index, vert_index+1, vert_index+2, vert_index+2, vert_index+3, vert_index]
     }
-}
 
-impl <T> Rect<T>
-where
-    T: Add<Output = T> + PartialOrd + Copy
-{
     /// Check if this rectangle intersects in any way with another retangle
-    pub fn has_intersection(&self, other: &Rect<T>) -> bool {
+    pub fn has_intersection(&self, other: &Rect<f32>) -> bool {
         let left = self.x;
         let right = self.x + self.w;
         let top = self.y;
@@ -110,14 +109,25 @@ where
         let o_top = other.y;
         let o_bottom = other.y + other.h;
 
-        if right <= o_left || o_right <= left {
+        !(
+            right-o_left < TOLERANCE ||
+            o_right-left < TOLERANCE ||
+            bottom-o_top < TOLERANCE ||
+            o_bottom-top < TOLERANCE
+        )
+    }
+}
+
+impl <T> Rect<T>
+where
+    T: Add<Output = T> + PartialOrd + Copy
+{
+
+    pub fn contains_point(&self, x: T, y: T) -> bool {
+        if x < self.x || y < self.y || x > self.x + self.w || y > self.y + self.h {
             return false;
         }
 
-        if top >= o_bottom || o_top >= bottom {
-            return false;
-        }
-
-        return true;
+        true
     }
 }
